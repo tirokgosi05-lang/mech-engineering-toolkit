@@ -32,6 +32,13 @@ function setResult(message, isError = false) {
 
 function renderFields(operationKey) {
   const operation = operations[operationKey];
+  if (!operation) {
+    setResult("Selected calculator is unavailable.", true);
+    equationNode.textContent = "";
+    fieldsNode.innerHTML = "";
+    return;
+  }
+
   equationNode.textContent = `Equation: ${operation.equation}`;
   fieldsNode.innerHTML = "";
 
@@ -42,18 +49,28 @@ function renderFields(operationKey) {
 
 async function loadOperations() {
   const response = await fetch("/api");
-  const payload = await response.json();
-  operations = payload.endpoints;
+  if (!response.ok) {
+    throw new Error("Unable to read API metadata");
+  }
 
-  Object.keys(operations).forEach((path) => {
-    const key = path.split("/").pop();
+  const payload = await response.json();
+  operations = payload.operations || {};
+
+  operationSelect.innerHTML = "";
+  Object.entries(operations).forEach(([key, operation]) => {
     const option = document.createElement("option");
     option.value = key;
-    option.textContent = operations[path].name;
+    option.textContent = operation.name;
     operationSelect.appendChild(option);
   });
 
-  renderFields(operationSelect.value);
+  const firstKey = Object.keys(operations)[0];
+  if (!firstKey) {
+    throw new Error("No calculators available");
+  }
+
+  operationSelect.value = firstKey;
+  renderFields(firstKey);
 }
 
 operationSelect.addEventListener("change", () => renderFields(operationSelect.value));
@@ -79,4 +96,4 @@ form.addEventListener("submit", async (event) => {
   setResult(`${payload.name}: ${payload.result.toFixed(6)}`);
 });
 
-loadOperations().catch(() => setResult("Could not load API metadata", true));
+loadOperations().catch((error) => setResult(error.message || "Could not load API metadata", true));

@@ -26,3 +26,12 @@ def test_unknown_operation():
     client = app.test_client()
     response = client.post("/api/not_real", json={"x": 1})
     assert response.status_code == 404
+
+
+def test_api_metadata_contains_operations():
+    client = app.test_client()
+    response = client.get("/api")
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert "operations" in payload
+    assert "stress" in payload["operations"]

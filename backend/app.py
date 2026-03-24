@@ -107,18 +107,21 @@ def home() -> str:
 
 @app.get("/api")
 def api_info():
+    operations = {
+        key: {
+            "name": formula.name,
+            "description": formula.description,
+            "equation": formula.equation,
+            "variables": formula.variables,
+        }
+        for key, formula in FORMULAS.items()
+    }
     return {
         "message": "Mechanical Engineering Toolkit API",
-        "version": "1.0.0",
-        "endpoints": {
-            f"/api/{key}": {
-                "name": formula.name,
-                "description": formula.description,
-                "equation": formula.equation,
-                "variables": formula.variables,
-            }
-            for key, formula in FORMULAS.items()
-        },
+        "version": "1.0.1",
+        "operations": operations,
+        # Backward compatibility for clients expecting path keys.
+        "endpoints": {f"/api/{key}": value for key, value in operations.items()},
     }
 
 
